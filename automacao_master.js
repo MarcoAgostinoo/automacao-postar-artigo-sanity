@@ -6,10 +6,23 @@ const { Schema } = require('@sanity/schema');
 const fs = require('fs');
 const path = require('path');
 const sharp = require('sharp');
-const { execSync } = require('child_process'); // Ferramenta para chamar o Python
+const { execSync } = require('child_process');
+const matter = require('gray-matter');
+const { marked } = require('marked');
 
-// 1. IMPORTAÇÃO DO ARTIGO
-const artigo = require('./artigo'); 
+// 1. LEITURA E PARSE DO POST.MD
+const arquivoMarkdown = fs.readFileSync(path.join(__dirname, 'post.md'), 'utf8');
+const { data: frontmatter, content: markdownContent } = matter(arquivoMarkdown);
+const conteudoHtml = marked(markdownContent);
+
+const artigo = {
+  titulo: frontmatter.titulo,
+  slug: frontmatter.slug,
+  resumo: frontmatter.resumo,
+  conteudoHtml: conteudoHtml,
+  seoTitle: frontmatter.titulo, // You might want to customize these
+  seoDescription: frontmatter.resumo,
+}; 
 
 // 2. CAÇADOR DE PDF
 const arquivosDaPasta = fs.readdirSync(__dirname);
@@ -95,17 +108,18 @@ async function processarImagem(nomeArquivoNoHtml) {
 
     console.log(`   ✂️  Node processando: ${nomeArquivoNoHtml}`);
 
-    const croppedBuffer = await image
+    const webpBuffer = await image
       .extract({
         left: CROP_CONFIG.left,
         top: CROP_CONFIG.top,
         width: newWidth,
         height: newHeight
       })
+      .webp({ quality: 80 }) // Convert to WebP
       .toBuffer();
 
-    const asset = await client.assets.upload('image', croppedBuffer, {
-      filename: nomeArquivoNoHtml,
+    const asset = await client.assets.upload('image', webpBuffer, {
+      filename: nomeArquivoNoHtml.replace(/.png/g, '.webp'),
     });
     
     return asset._id;

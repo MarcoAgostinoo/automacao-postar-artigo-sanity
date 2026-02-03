@@ -15,10 +15,10 @@ def converter(caminho_pdf):
         if os.path.isfile(caminho_arquivo):
             os.unlink(caminho_arquivo)
 
-    print(f"🐍 PYTHON: Abrindo '{caminho_pdf}'...")
+    print(f"PYTHON: Abrindo '{caminho_pdf}'...")
     
     doc = fitz.open(caminho_pdf)
-    zoom = 2.0 # Alta qualidade
+    zoom = 1.5 # Alta qualidade
     matriz = fitz.Matrix(zoom, zoom)
 
     count = 0
@@ -28,10 +28,10 @@ def converter(caminho_pdf):
         nome_arquivo = f"{i+1}.png"
         caminho_completo = os.path.join(pasta_saida, nome_arquivo)
         pix.save(caminho_completo)
-        print(f"   ✅ Pág {i+1} salva: public/{nome_arquivo}")
+        print(f"   Pág {i+1} salva: public/{nome_arquivo}")
         count += 1
 
-    print(f"🐍 PYTHON: Sucesso! {count} páginas convertidas.")
+    print(f"PYTHON: Sucesso! {count} páginas convertidas.")
 
 if __name__ == "__main__":
     if len(sys.argv) > 1:
