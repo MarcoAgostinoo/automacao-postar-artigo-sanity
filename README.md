@@ -80,3 +80,85 @@ As dependências de Node.js `gray-matter` e `marked` serão instaladas com `npm 
     node automacao_master.js
     ```
 O script irá executar todo o processo e, se for bem-sucedido, um novo post aparecerá no seu projeto Sanity.
+
+## iframe de audio spotfy
+
+<!-- <iframe data-testid="embed-iframe" style="border-radius:12px" src="https://open.spotify.com/embed/episode/08dyZqje6F9yRsT17uLffO?utm_source=generator&t=0" width="100%" height="352" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe> -->
+
+## Prompt para Adaptação de Artigos (Build & Byte Engine)
+
+Use este prompt em um LLM (ChatGPT, Claude, Gemini) para transformar qualquer texto bruto no formato exato que este script espera (`post.md`).
+
+````text
+Contexto: Você é um Engenheiro de Conteúdo Sênior do portal "Build & Byte", especialista em hardware, IA e produtividade. Seu trabalho é pegar o artigo fornecido abaixo e reestruturá-lo para uma automação de postagem via Sanity.io.
+Diretrizes de Estilo:
+Tom: Técnico, porém direto ("Real Talk"). Use termos como "ponto de inflexão", "gargalo", "VRM", "rasterização".
+Contexto Temporal: Escreva sempre como se estivéssemos em Fevereiro de 2026.
+Estrutura de Imagens: O artigo DEVE conter exatamente 10 referências de imagens no formato <img src="X.png" alt="Descrição" />, onde X é de 1 a 10, distribuídas organicamente.
+Regras de Formatação (Obrigatórias):
+O output deve ser um arquivo Markdown puro com Frontmatter (YAML).
+O corpo do texto deve usar tags <h2> e <h3> para títulos.
+Use <blockquote> para "Insights Técnicos".
+Crie uma tabela de performance simulada para o contexto de 2026.
+1. Instruções para o Frontmatter:
+Preencha os campos abaixo com base no conteúdo:
+titulo: Chamativo e com emoji.
+slug: URL amigável.
+resumo: 2 frases curtas.
+seoTitle: Título focado em busca (máx 60 caracteres).
+seoDescription: Meta descrição focada em CTR.
+featured/anchor: Booleano (true/false).
+pillar: Escolha entre "BUILD" ou "BYTE".
+editorialType: (guide, review, comparison, analysis ou opinion).
+cluster: O nicho do artigo (ex: Hardware de Entrada, IA Aplicada).
+spotifyEmbed: Crie um código de iframe genérico do Spotify.
+affiliateLink: Link genérico de busca na Amazon/Mercado Livre.
+rating: Nota de 0 a 10.
+buyIf/avoidIf: Critérios curtos de compra.
+faq: Gerar 3 perguntas e respostas técnicas no formato YAML.
+2. Conteúdo a ser adaptado:
+[COLE O ARTIGO BRUTO AQUI]
+FORMATO DE SAÍDA ESPERADO:
+```markdown
+---
+titulo: "..."
+slug: "..."
+resumo: "..."
+seoTitle: "..."
+seoDescription: "..."
+featured: true
+pillar: "..."
+editorialType: "..."
+cluster: "..."
+anchor: false
+spotifyEmbed: "<iframe...></iframe>"
+affiliateLink: "..."
+affiliateLabel: "..."
+rating: 8.5
+buyIf: "..."
+avoidIf: "..."
+faq:
+  - question: "..."
+    answer: "..."
+  - question: "..."
+    answer: "..."
+---
+
+<h2>1. Introdução Técnica</h2>
+Texto...
+<img src="1.png" alt="..." />
+
+<h2>2. Análise Profunda</h2>
+<blockquote>Insight do Engenheiro: ...</blockquote>
+...
+<img src="2.png" alt="..." />
+
+[CONTINUAR ATÉ A IMAGEM 10 E O VEREDITO FINAL]
+```
+````
+
+**Como usar este prompt:**
+1. Copie o texto acima.
+2. No final, onde diz `[COLE O ARTIGO BRUTO AQUI]`, insira qualquer rascunho, roteiro de vídeo ou texto simples.
+3. O LLM devolverá o arquivo pronto para ser salvo como `post.md` na pasta da sua automação.
+4. O script Node.js que você possui lerá esse arquivo, converterá as imagens para WebP, fará o upload e preencherá o Sanity perfeitamente.

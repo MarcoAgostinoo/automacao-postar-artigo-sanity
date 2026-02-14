@@ -20,7 +20,7 @@ const artigo = {
   slug: frontmatter.slug,
   resumo: frontmatter.resumo,
   conteudoHtml: conteudoHtml,
-  seoTitle: frontmatter.titulo, // You might want to customize these
+  seoTitle: frontmatter.titulo, 
   seoDescription: frontmatter.resumo,
 }; 
 
@@ -33,7 +33,7 @@ if (!nomeArquivoPDF) {
   process.exit(1);
 }
 
-// Resolve o caminho absoluto para evitar erros de espaço no Windows
+// Resolve o caminho absoluto
 const caminhoAbsolutoPDF = path.join(__dirname, nomeArquivoPDF);
 
 console.log(`=============================================`);
@@ -46,9 +46,10 @@ console.log(`=============================================`);
 const DPI = 96;
 const PX_PER_CM = Math.round(DPI / 2.54);
 const CROP_CONFIG = {
-  bottom: Math.round(1 * PX_PER_CM),
-  left: Math.round(1 * PX_PER_CM),
-  right: Math.round(1 * PX_PER_CM),
+  bottom: Math.round(1.0 * PX_PER_CM),
+  left: Math.round(2 * PX_PER_CM),
+  left: Math.round(2 * PX_PER_CM),
+  right: Math.round(2 * PX_PER_CM),
   top: 0
 };
 
@@ -76,8 +77,6 @@ const blockContentType = defaultSchema.get('post').fields.find((f) => f.name ===
 function chamarPythonParaConverter() {
   console.log(`\n⚙️  Etapa 1: Chamando Python para converter PDF...`);
   try {
-    // Comando mágico: Node manda o Python executar o script converter.py
-    // As aspas em "${caminhoAbsolutoPDF}" protegem contra espaços no nome da pasta
     execSync(`python converter.py "${caminhoAbsolutoPDF}"`, { stdio: 'inherit' });
   } catch (error) {
     console.error("❌ Erro ao executar o script Python. Verifique se 'pip install pymupdf' foi feito.");
@@ -115,7 +114,7 @@ async function processarImagem(nomeArquivoNoHtml) {
         width: newWidth,
         height: newHeight
       })
-      .webp({ quality: 80 }) // Convert to WebP
+      .webp({ quality: 80 }) 
       .toBuffer();
 
     const asset = await client.assets.upload('image', webpBuffer, {
@@ -142,12 +141,19 @@ async function executar() {
     const dom = new JSDOM(artigo.conteudoHtml);
     const imagensNoHtml = Array.from(dom.window.document.querySelectorAll('img'));
     const mapaDeImagens = {};
+    
+    // --- NOVO: Variável para guardar a capa ---
+    let primeiraImagemId = null;
 
     for (const img of imagensNoHtml) {
       const src = img.getAttribute('src');
       if (!mapaDeImagens[src]) {
         const assetId = await processarImagem(src);
-        if (assetId) mapaDeImagens[src] = assetId;
+        if (assetId) {
+            mapaDeImagens[src] = assetId;
+            // --- NOVO: Se for a primeira imagem, define como capa ---
+            if (!primeiraImagemId) primeiraImagemId = assetId;
+        }
       }
     }
 
@@ -168,6 +174,7 @@ async function executar() {
                 alt: el.getAttribute('alt') || artigo.titulo,
               });
             }
+            // Regra para evitar Blockquotes quebrados (ajuste fino)
             if (el.tagName?.toLowerCase() === 'pre') {
                 return block({
                     _type: 'block',
@@ -183,13 +190,47 @@ async function executar() {
 
     const doc = {
       _type: 'post',
-      title: artigo.titulo,
-      slug: { _type: 'slug', current: artigo.slug },
-      excerpt: artigo.resumo,
-      seoTitle: artigo.seoTitle,
-      seoDescription: artigo.seoDescription,
+      title: frontmatter.titulo,
+      slug: { _type: 'slug', current: frontmatter.slug },
+      excerpt: frontmatter.resumo,
+      
+      seoTitle: frontmatter.seoTitle || frontmatter.titulo,
+      seoDescription: frontmatter.seoDescription || frontmatter.resumo,
+      spotifyEmbed: frontmatter.spotifyEmbed,
+      featured: frontmatter.featured || false,
+      anchor: frontmatter.anchor || false,
+      pillar: frontmatter.pillar,
+      editorialType: frontmatter.editorialType,
+      cluster: frontmatter.cluster,
+      affiliateLink: frontmatter.affiliateLink,
+      affiliateLabel: frontmatter.affiliateLabel,
+      rating: frontmatter.rating,
+
+      // --- NOVO: Define a Imagem de Capa ---
+      mainImage: primeiraImagemId ? {
+        _type: 'image',
+        asset: { _type: 'reference', _ref: primeiraImagemId }
+      } : undefined,
+      
+      veredito: {
+        buyIf: frontmatter.buyIf,
+        avoidIf: frontmatter.avoidIf
+      },
+      
+      // FAQ com geração de _key mais segura
+      faq: frontmatter.faq?.map((item, index) => ({
+        _key: `faq-${index}-${Date.now()}`, 
+        _type: 'faqItem',
+        question: item.question,
+        answer: item.answer
+      })),
+
       author: { _type: 'reference', _ref: '7639c638-b868-478d-8f5d-e0767fda0248' }, 
-      categories: [{ _type: 'reference', _ref: '43500a02-9e4a-4076-b0a4-773f1b639906', _key: 'ia-cat' }],
+      categories: [{ 
+        _type: 'reference', 
+        _ref: '43500a02-9e4a-4076-b0a4-773f1b639906', 
+        _key: `cat-ref-main` 
+      }],
       publishedAt: new Date().toISOString(),
       body: blocks,
     };
